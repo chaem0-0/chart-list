@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Chart Dashboard</title>
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Dark.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --sidebar-color: #1e293b;
+            --accent-color: #38bdf8;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body { 
+            margin: 0; display: flex; height: 100vh; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: var(--bg-color); color: var(--text-main); 
+        }
+
+        /* Sidebar Styling */
+        #sidebar { 
+            width: 300px; background: var(--sidebar-color); 
+            display: flex; flex-direction: column; 
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header { padding: 30px 20px; text-align: center; }
+        .sidebar-header h2 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; color: var(--accent-color); }
+
+        #menu-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
+        .menu-item { 
+            padding: 15px 25px; cursor: pointer; border-left: 4px solid transparent;
+            transition: all 0.3s; font-size: 0.9rem; color: var(--text-dim);
+        }
+        .menu-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .menu-item.active { 
+            background: rgba(56, 189, 248, 0.1); 
+            color: var(--accent-color); 
+            border-left-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        #main-content { flex: 1; padding: 40px; display: flex; flex-direction: column; gap: 20px; }
+        .chart-card { 
+            flex: 1; background: rgba(30, 41, 59, 0.7); 
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        #chart-container { width: 100%; height: 100%; }
+        
+        .badge {
+            position: absolute; top: 20px; right: 20px;
+            padding: 4px 12px; border-radius: 12px; font-size: 0.7rem;
+            text-transform: uppercase; font-weight: bold; background: #334155;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="sidebar-header">
+        <h2>CHART LAB</h2>
+    </div>
+    <ul id="menu-list"></ul>
+</div>
+
+<div id="main-content">
+    <div class="chart-card">
+        <div id="badge" class="badge">ECharts</div>
+        <div id="chart-container"></div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Chart 데이터 설정
+     * engine: 'echarts' 또는 'amcharts' 선택
+     */
+    const chartConfigs = [
+        {
+            title: "ECharts: Gradient Line",
+            engine: "echarts",
+            option: {
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], axisLine: { lineStyle: { color: '#475569' } } },
+                yAxis: { type: 'value', splitLine: { lineStyle: { color: '#334155' } } },
+                series: [{
+                    data: [150, 230, 224, 218, 135, 147],
+                    type: 'line', smooth: true,
+                    lineStyle: { width: 4, color: '#38bdf8' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: 'rgba(56,189,248,0.3)'}, {offset: 1, color: 'transparent'}]) }
+                }]
+            }
+        },
+        {
+            title: "amCharts: Modern Pie",
+            engine: "amcharts",
+            // amCharts는 함수 형태로 root를 받아 설정하도록 구현
+            setup: (root) => {
+                let chart = root.container.children.push(am5percent.PieChart.new(root, { layout: root.verticalCenter }));
+                let series = chart.series.push(am5percent.PieSeries.new(root, { valueField: "value", categoryField: "category" }));
+                series.data.setAll([
+                    { value: 10, category: "Search" },
+                    { value: 20, category: "Direct" },
+                    { value: 15, category: "Social" }
+                ]);
+                series.appear(1000, 100);
+            }
+        },
+        {
+            title: "amCharts: Column Chart",
+            engine: "amcharts",
+            setup: (root) => {
+                let chart = root.container.children.push(am5xy.XYChart.new(root, { panX: true, panY: true, wheelX: "panX", wheelY: "zoomX" }));
+                let xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                    categoryField: "year",
+                    renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 30 })
+                }));
+                xAxis.data.setAll([{ year: "2021" }, { year: "2022" }, { year: "2023" }]);
+                let yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, { renderer: am5xy.AxisRendererY.new(root, {}) }));
+                let series = chart.series.push(am5xy.ColumnSeries.new(root, { xAxis: xAxis, yAxis: yAxis, valueYField: "value", categoryXField: "year" }));
+                series.data.setAll([{ year: "2021", value: 50 }, { year: "2022", value: 80 }, { year: "2023", value: 60 }]);
+            }
+        }
+    ];
+
+    class ChartManager {
+        constructor(containerId) {
+            this.container = document.getElementById(containerId);
+            this.activeEChart = null;
+            this.activeAmRoot = null;
+        }
+
+        dispose() {
+            if (this.activeEChart) {
+                this.activeEChart.dispose();
+                this.activeEChart = null;
+            }
+            if (this.activeAmRoot) {
+                this.activeAmRoot.dispose();
+                this.activeAmRoot = null;
+            }
+            this.container.innerHTML = "";
+        }
+
+        render(config) {
+            this.dispose();
+            document.getElementById('badge').textContent = config.engine.toUpperCase();
+
+            if (config.engine === 'echarts') {
+                this.activeEChart = echarts.init(this.container, 'dark');
+                this.activeEChart.setOption(config.option);
+            } 
+            else if (config.engine === 'amcharts') {
+                const root = am5.Root.new(this.container);
+                root.setThemes([ am5themes_Animated.new(root), am5themes_Dark.new(root) ]);
+                config.setup(root);
+                this.activeAmRoot = root;
+            }
+        }
+
+        resize() {
+            if (this.activeEChart) this.activeEChart.resize();
+        }
+    }
+
+    // 초기화
+    const manager = new ChartManager('chart-container');
+    const menuList = document.getElementById('menu-list');
+
+    chartConfigs.forEach((config, index) => {
+        const li = document.createElement('li');
+        li.className = 'menu-item';
+        li.textContent = config.title;
+        li.onclick = () => {
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            manager.render(config);
+        };
+        menuList.appendChild(li);
+    });
+
+    // 첫 번째 차트 로드
+    menuList.firstChild.click();
+    window.onresize = () => manager.resize();
+
+</script>
+</body>
+</html>
